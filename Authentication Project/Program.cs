@@ -1,4 +1,7 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Razor;
+using StartcodeAuthentication.CustomAuthHandlers;
+using System.ComponentModel;
 using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +13,15 @@ builder.Services.Configure<RazorViewEngineOptions>(rvo =>
     rvo.ViewLocationFormats.Add("~/Views/Shared/{0}.cshtml");
 });
 
+builder.Services.AddAuthentication(o =>
+{
+    o.DefaultScheme = "handler1";
+}).AddCustomAuth(authenticationScheme: "handler1",
+                displayName: "myAuth",
+                configureOptions: o =>
+                {
+                    o.LoginPath = "/User/Login";
+                });
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
