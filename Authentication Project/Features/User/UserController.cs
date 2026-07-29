@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace StartcodeAuthentication.Features.User;
@@ -16,7 +17,50 @@ public class UserController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginModel loginCredentials)
     {
-        return Redirect(loginCredentials.ReturnUrl ?? "/");
+        var username = loginCredentials.UserName;
+
+        var myClaims = new List<Claim>
+        {
+            new Claim("sub", "1245"),
+            new Claim("name", username),
+            new Claim("email", "bob@tn-data.se"),
+            new Claim("role", "developer"),
+            new Claim("role", "admin")
+        };
+
+        var myIdentity = new ClaimsIdentity(claims: myClaims,
+            authenticationType: "pwd",
+            nameType: "name",
+            roleType: "role");
+
+        var myPrincipal = new ClaimsPrincipal(myIdentity);
+        var parameters = new Dictionary<string, object>() {
+            { "Param1", "Value1" },
+            {"Param2", "Value2" },
+            {"Param3", "Value3" }
+        };
+
+        var items = new Dictionary<string, string>()
+        {
+            {"Item1", "Value1" },
+            {"Item2", "Value2" },
+            {"Item3", "Value3" }
+        };
+
+        var properties = new AuthenticationProperties(items, parameters)
+        {
+            IsPersistent = true
+        };
+        await HttpContext.SignInAsync(myPrincipal, properties);
+
+        if(Url.IsLocalUrl(loginCredentials.ReturnUrl))
+        {
+            return LocalRedirect(loginCredentials.ReturnUrl);
+        }
+        else
+        {
+            return LocalRedirect("/");
+        }
     }
 
 

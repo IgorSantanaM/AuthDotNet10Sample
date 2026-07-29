@@ -15,13 +15,19 @@ builder.Services.Configure<RazorViewEngineOptions>(rvo =>
 
 builder.Services.AddAuthentication(o =>
 {
-    o.DefaultScheme = "handler1";
-}).AddCustomAuth(authenticationScheme: "handler1",
-                displayName: "myAuth",
-                configureOptions: o =>
-                {
-                    o.LoginPath = "/User/Login";
-                });
+    o.DefaultScheme = "cookie";
+}).AddCookie("cookie", o =>
+{
+    o.LoginPath = "/User/Login";
+    o.AccessDeniedPath = "/User/AccessDenied";
+    o.ExpireTimeSpan = TimeSpan.FromDays(7);
+});
+    //.AddCustomAuth(authenticationScheme: "handler1",
+    //            displayName: "myAuth",
+    //            configureOptions: o =>
+    //            {
+    //                o.LoginPath = "/User/Login";
+    //            });
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 

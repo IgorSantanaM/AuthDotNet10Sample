@@ -33,7 +33,7 @@ namespace StartcodeAuthentication.CustomAuthHandlers
                 return Task.FromResult(AuthenticateResult.NoResult());
             }
             List<Claim> claims = new() { new Claim(ClaimTypes.Name, username) };
-
+            
 
             return Task.FromResult(AuthenticateResult.NoResult());
 
