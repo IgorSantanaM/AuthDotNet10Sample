@@ -22,30 +22,52 @@ namespace StartcodeAuthentication.CustomAuthHandlers
 
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            var path = Request.Path.Value ?? "[Unknown]";
+            var path = Request?.Path ?? "[Unknown]";
             WriteToLog($"HandleAuthenticateAsync: Called for {path}");
 
-            var username = Request.Cookies[Options.CookieName];
-
-            if (string.IsNullOrEmpty(username))
+            var authCookie = Request.Cookies[Options.CookieName];
+            if (string.IsNullOrEmpty(authCookie))
             {
-                WriteToLog("HandleAuthenticateAsync: No cookie found, returning NoResult");
+                WriteToLog($"No cookie {Options.CookieName} found - user not authenticated");
                 return Task.FromResult(AuthenticateResult.NoResult());
             }
-            List<Claim> claims = new() { new Claim(ClaimTypes.Name, username) };
-            
+            else
+            {
+                try
+                {
+                    byte[] serializedTicket = Convert.FromBase64String(authCookie);
 
-            return Task.FromResult(AuthenticateResult.NoResult());
+                    AuthenticationTicket ticket = TicketSerializer.Default.Deserialize(serializedTicket);
 
+                    return Task.FromResult(AuthenticateResult.Success(ticket));
+                }
+                catch (Exception ex)
+                {
+                    return Task.FromResult(AuthenticateResult.Fail("Invalid authentication cookie"));
+                }
+            }
         }
 
         protected override Task HandleSignInAsync(ClaimsPrincipal user, AuthenticationProperties properties)
         {
-           Response.Cookies.Append(key: Options.CookieName, value: user.Identity?.Name ?? "UnknownUser", new CookieOptions
-           {
-               HttpOnly = true,
-               SameSite = SameSiteMode.Lax
-           });
+            Response.Cookies.Append(key: Options.CookieName, value: user.Identity?.Name ?? "UnknownUser", new CookieOptions
+            {
+                HttpOnly = true,
+                SameSite = SameSiteMode.Lax
+            });
+
+            var ticket = new AuthenticationTicket(user, properties, Scheme.Name);
+
+            byte[] serializedTicket = TicketSerializer.Default.Serialize(ticket);
+
+            var cookieValue = Convert.ToBase64String(serializedTicket);
+
+            Response.Cookies.Append(Options.CookieName, cookieValue, new CookieOptions
+            {
+                HttpOnly = true,
+                SameSite = SameSiteMode.Lax
+            });
+
 
             var redirectUrl = Options.DefaultRedirectPath;
             Response.Redirect(redirectUrl);
