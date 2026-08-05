@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Options;
+using System.Data.Common;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 
@@ -37,7 +39,11 @@ namespace StartcodeAuthentication.CustomAuthHandlers
                 {
                     byte[] serializedTicket = Convert.FromBase64String(authCookie);
 
-                    AuthenticationTicket ticket = TicketSerializer.Default.Deserialize(serializedTicket);
+                    var provider = DataProtectionProvider.Create("MyApp");
+                    var protector = provider.CreateProtector("AuthTicket");
+                    var unprotectedBytes = protector.Unprotect(serializedTicket);
+
+                    AuthenticationTicket ticket = TicketSerializer.Default.Deserialize(unprotectedBytes);
 
                     return Task.FromResult(AuthenticateResult.Success(ticket));
                 }
@@ -60,7 +66,11 @@ namespace StartcodeAuthentication.CustomAuthHandlers
 
             byte[] serializedTicket = TicketSerializer.Default.Serialize(ticket);
 
-            var cookieValue = Convert.ToBase64String(serializedTicket);
+            var provider = DataProtectionProvider.Create("MyApp");
+            var protector = provider.CreateProtector("AuthTicket");
+            var protectedBytes = protector.Protect(serializedTicket);
+
+            var cookieValue = Convert.ToBase64String(protectedBytes);
 
             Response.Cookies.Append(Options.CookieName, cookieValue, new CookieOptions
             {
