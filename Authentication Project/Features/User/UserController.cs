@@ -49,7 +49,8 @@ public class UserController : Controller
 
         var properties = new AuthenticationProperties(items, parameters)
         {
-            IsPersistent = true
+            IsPersistent = true,
+            AllowRefresh = true
         };
         await HttpContext.SignInAsync(myPrincipal, properties);
 
