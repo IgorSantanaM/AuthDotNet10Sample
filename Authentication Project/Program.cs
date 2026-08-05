@@ -20,7 +20,8 @@ builder.Services.AddAuthentication(o =>
 {
     o.LoginPath = "/User/Login";
     o.AccessDeniedPath = "/User/AccessDenied";
-    o.ExpireTimeSpan = TimeSpan.FromDays(7);
+    //o.ExpireTimeSpan = TimeSpan.FromDays(7);
+    o.SlidingExpiration = true;
 });
     //.AddCustomAuth(authenticationScheme: "handler1",
     //            displayName: "myAuth",
