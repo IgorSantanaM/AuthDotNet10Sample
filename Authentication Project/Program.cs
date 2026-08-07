@@ -1,7 +1,4 @@
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Razor;
-using StartcodeAuthentication.CustomAuthHandlers;
-using System.ComponentModel;
 using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,13 +19,27 @@ builder.Services.AddAuthentication(o =>
     o.AccessDeniedPath = "/User/AccessDenied";
     //o.ExpireTimeSpan = TimeSpan.FromDays(7);
     o.SlidingExpiration = true;
+    o.Events.OnRedirectToLogin = (context) =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            // For API requests, return 401 Unauthorized instead of redirecting to the login page
+            context.Response.StatusCode = 401;
+        }
+        else
+        {
+            context.Response.Redirect(context.RedirectUri);
+        }
+        return Task.CompletedTask;
+    };
+
 });
-    //.AddCustomAuth(authenticationScheme: "handler1",
-    //            displayName: "myAuth",
-    //            configureOptions: o =>
-    //            {
-    //                o.LoginPath = "/User/Login";
-    //            });
+//.AddCustomAuth(authenticationScheme: "handler1",
+//            displayName: "myAuth",
+//            configureOptions: o =>
+//            {
+//                o.LoginPath = "/User/Login";
+//            });
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
@@ -40,10 +51,10 @@ app.Use(async (context, next) =>
 {
     var myClaims = new List<Claim>()
  {
-     new Claim("sub", "12345"),
-     new Claim(@"name", "John Doe"),
-     new Claim("email", "john@doe.com"),
-     new Claim("role", "Admin")
+     new("sub", "12345"),
+     new(@"name", "John Doe"),
+     new("email", "john@doe.com"),
+     new("role", "Admin")
  };
 
     var myIdentity = new ClaimsIdentity(claims: myClaims,
