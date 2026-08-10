@@ -10,6 +10,14 @@ builder.Services.Configure<RazorViewEngineOptions>(rvo =>
     rvo.ViewLocationFormats.Add("~/Views/Shared/{0}.cshtml");
 });
 
+builder.Services.AddAuthorization(o =>
+{
+    o.AddPolicy("AdminOnly", p =>
+    {
+        p.RequireRole("Admin");
+    });
+});
+
 builder.Services.AddAuthentication(o =>
 {
     o.DefaultScheme = "cookie";
@@ -81,6 +89,7 @@ app.UseRouting();
 
 app.UseStaticFiles();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

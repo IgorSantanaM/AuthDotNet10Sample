@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace StartcodeAuthentication.Features.Secure;
 
 // URL: /Secure/Index
 public class SecureController : Controller
 {
+    [Authorize(Policy = "AdminOnly")]
     public IActionResult Index()
     {
         if (User?.Identity?.IsAuthenticated == true)
