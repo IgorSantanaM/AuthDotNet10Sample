@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Razor;
 using System.Security.Claims;
 
@@ -8,14 +9,6 @@ builder.Services.Configure<RazorViewEngineOptions>(rvo =>
 {
     rvo.ViewLocationFormats.Add("~/Features/{1}/{0}.cshtml");
     rvo.ViewLocationFormats.Add("~/Views/Shared/{0}.cshtml");
-});
-
-builder.Services.AddAuthorization(o =>
-{
-    o.AddPolicy("AdminOnly", p =>
-    {
-        p.RequireRole("Admin");
-    });
 });
 
 builder.Services.AddAuthentication(o =>
@@ -42,6 +35,8 @@ builder.Services.AddAuthentication(o =>
     };
 
 });
+
+builder.Services.AddAuthorizationServices();
 //.AddCustomAuth(authenticationScheme: "handler1",
 //            displayName: "myAuth",
 //            configureOptions: o =>
@@ -98,3 +93,94 @@ app.MapControllerRoute(
 
 
 app.Run();
+
+public static class AuthorizationExtensions
+{
+    public static IServiceCollection AddAuthorizationServices(this IServiceCollection services)
+    {
+        services.AddAuthorization(o =>
+        {
+            //o.AddPolicy("AdminOnly", p =>
+            //{
+            //    p.RequireRole("Admin");
+            //});
+
+            o.AddPolicy("finance", p =>
+            {
+                p.Requirements.Add(new FinanceAccessRequirement());
+
+            });
+        });
+
+        services.AddSingleton<IAuthorizationHandler, FinanceAccessHandler>();
+        services.AddSingleton<IAuthorizationHandler, ManagementAccessHandler>();
+        services.AddSingleton<IAuthorizationHandler, ActiveUserHandler>();
+
+        return services;
+    }
+}
+
+public class FinanceAccessRequirement : IAuthorizationRequirement
+{
+   
+}
+
+public class FinanceAccessHandler(ILogger<FinanceAccessHandler> logger) : AuthorizationHandler<FinanceAccessRequirement>
+{
+    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, FinanceAccessRequirement requirement)
+    {
+        logger.LogInformation("FinanceAccessHandler: Checking if user has finance access.");
+        var user = context.User;
+
+        var titleOk = user.HasClaim(c => c.Type == "JobTitle" && c.Value == "finance");
+
+        var countryOk = user.HasClaim(c => c.Type == "Country" && (c.Value == "USA") || (c.Value == "UK"));
+
+        var rolesOk = user.IsInRole("finance");
+
+        if(titleOk && countryOk && rolesOk)
+            context.Succeed(requirement);
+        else
+            context.Fail();
+
+        return Task.CompletedTask;
+    }
+}
+
+public class ManagementAccessHandler(ILogger<ManagementAccessHandler> logger) : AuthorizationHandler<FinanceAccessRequirement>
+{
+    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, FinanceAccessRequirement requirement)
+    {
+        logger.LogInformation("ManagementAccessHandler: Checking if user is in management role.");
+        if (context.User.IsInRole("management"))
+            context.Succeed(requirement);
+        else
+            context.Fail();
+
+        return Task.CompletedTask;
+    }
+}
+
+public class ActiveUserHandler : AuthorizationHandler<FinanceAccessRequirement>
+{
+    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, FinanceAccessRequirement requirement)
+    {
+        var user = context.User;
+       bool isActive = IsUserActive(user);
+
+        if(isActive)
+        {
+            context.Succeed(requirement);
+        }
+        else
+        {
+            context.Fail();
+        }
+        return Task.CompletedTask;
+    }
+
+    private bool IsUserActive(ClaimsPrincipal user)
+    {
+        return true;
+    }
+}

@@ -6,7 +6,7 @@ namespace StartcodeAuthentication.Features.Secure;
 // URL: /Secure/Index
 public class SecureController : Controller
 {
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize(Policy = "finance")]
     public IActionResult Index()
     {
         if (User?.Identity?.IsAuthenticated == true)
