@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Razor;
-using StartcodeAuthentication.Infrastructure.Filters;
 using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,7 +10,6 @@ builder.Services.Configure<RazorViewEngineOptions>(rvo =>
     rvo.ViewLocationFormats.Add("~/Features/{1}/{0}.cshtml");
     rvo.ViewLocationFormats.Add("~/Views/Shared/{0}.cshtml");
 });
-
 
 builder.Services.AddAuthentication(o =>
 {
@@ -46,11 +44,7 @@ builder.Services.AddAuthorizationServices();
 //                o.LoginPath = "/User/Login";
 //            });
 // Add services to the container.
-builder.Services.AddControllersWithViews(o =>
-{
-    // Add a global filter to add claims to the user principal
-    o.Filters.Add<AddClaimsFilter>();
-});
+builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
@@ -99,3 +93,7 @@ app.MapControllerRoute(
 
 
 app.Run();
+
+public class InvoiceOwnershipRequirement : IAuthorizationRequirement
+{
+}
