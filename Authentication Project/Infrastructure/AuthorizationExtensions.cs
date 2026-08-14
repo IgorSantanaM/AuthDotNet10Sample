@@ -19,6 +19,15 @@ public static class AuthorizationExtensions
                 p.Requirements.Add(new FinanceAccessRequirement());
 
             });
+
+            o.FallbackPolicy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build();
+
+            o.DefaultPolicy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .RequireClaim("JobTitle")
+                .Build();
         });
 
         services.AddSingleton<IAuthorizationHandler, FinanceAccessHandler>();
