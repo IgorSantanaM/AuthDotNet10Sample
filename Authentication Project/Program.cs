@@ -90,8 +90,12 @@ app.UseRouting();
 
 app.UseStaticFiles();
 
+
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapStaticAssets()
+    .AllowAnonymous();
 
 app.MapControllerRoute(
     name: "default",

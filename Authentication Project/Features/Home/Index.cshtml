@@ -1,7 +1,22 @@
-﻿@{
+﻿@using Microsoft.AspNetCore.Authorization
+@using StartcodeAuthentication.Infrastructure
+@inject IAuthorizationService authorizationService
+@{
     ViewData["Title"] = "Home Page";
 }
 
+@{
+    var financeCheck = await authorizationService.AuthorizeAsync(User, Policies.FinanceAccessPolicy);
+}
+
+@if(financeCheck.Succeeded)
+{
+    <p>Welcome to the Finance section!</p>
+}
+else
+{
+    <p>You do not have access to the Finance section.</p>
+}
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
     <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
